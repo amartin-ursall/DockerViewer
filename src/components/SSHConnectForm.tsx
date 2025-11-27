@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useForm, Controller, SubmitHandler } from 'react-hook-form';
+import { useForm, Controller, SubmitHandler, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ interface SSHConnectFormProps {
 export function SSHConnectForm({ onConnect, isConnecting, connectionToEdit }: SSHConnectFormProps) {
   const [authMethod, setAuthMethod] = useState<AuthMethod>(connectionToEdit?.authMethod || 'password');
   const { register, handleSubmit, control, formState: { errors }, setValue, reset } = useForm<ConnectionFormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as Resolver<ConnectionFormData>,
     defaultValues: {
       alias: 'New Server',
       host: '192.168.1.1',
