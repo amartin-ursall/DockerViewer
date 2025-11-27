@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { containers } from '@/lib/api-client';
 import type { ContainerLog, ContainerStats, ContainerConfig } from '@shared/types';
@@ -9,8 +9,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, FileText, BarChart2, Settings, Terminal as TerminalIcon } from 'lucide-react';
+import { FileText, BarChart2, Settings, Terminal as TerminalIcon, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { motion } from 'framer-motion';
 const LogViewer = ({ logs }: { logs: ContainerLog[] }) => (
   <ScrollArea className="h-[500px] bg-black rounded-md p-4 font-mono text-sm">
     {logs.map((log, index) => (
@@ -166,11 +168,28 @@ export function ContainerDetailPage() {
     <AppLayout container>
       <Toaster richColors theme="dark" />
       <div className="space-y-4">
-        <button onClick={() => navigate(`/dashboard?serverId=${serverId}`)} className="flex items-center gap-2 text-teal-400 hover:text-teal-300 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
-        </button>
-        <h1 className="text-3xl font-bold text-white">Container Details: <span className="text-teal-400">{containerId}</span></h1>
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/connections" className="text-teal-400 hover:text-teal-300 transition-colors">Connections</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator><ChevronRight className="h-4 w-4" /></BreadcrumbSeparator>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to={`/dashboard?serverId=${serverId}`} className="text-teal-400 hover:text-teal-300 transition-colors">Dashboard</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator><ChevronRight className="h-4 w-4" /></BreadcrumbSeparator>
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-gray-400">Container Details</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </motion.div>
+        <h1 className="text-3xl font-bold text-white">Container: <span className="text-teal-400">{containerId}</span></h1>
         <Card className="bg-gray-900/50 border-gray-700/50 text-white">
           <CardContent className="p-0">
             <Tabs defaultValue="logs" className="w-full">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Toaster, toast } from 'sonner';
 import { servers } from '@/lib/api-client';
@@ -7,12 +7,14 @@ import type { ServerSummary } from '@shared/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Cpu, MemoryStick, HardDrive, Timer, Anchor, Box, Image as ImageIcon, FileText as LogIcon } from 'lucide-react';
+import { Cpu, MemoryStick, HardDrive, Timer, Anchor, Box, Image as ImageIcon, FileText as LogIcon, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
 import { ContainersPage } from './ContainersPage';
 import { ImagesPage } from './ImagesPage';
 import { LogsPage } from './LogsPage';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { motion } from 'framer-motion';
 const MetricCard = ({ title, value, total, unit, icon: Icon, progress, history }: any) => (
   <Card className="bg-gray-900/50 border-gray-700/50 text-white">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -95,6 +97,23 @@ export function DashboardPage() {
     <AppLayout container>
       <Toaster richColors theme="dark" />
       <div className="space-y-8">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/connections" className="text-teal-400 hover:text-teal-300 transition-colors">Connections</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator>
+                <ChevronRight className="h-4 w-4" />
+              </BreadcrumbSeparator>
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-gray-400">Dashboard</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </motion.div>
         <h1 className="text-3xl font-bold text-white">Server Dashboard</h1>
         {loading ? <LoadingSkeleton /> : summary && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
