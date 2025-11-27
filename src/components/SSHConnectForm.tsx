@@ -121,7 +121,7 @@ export function SSHConnectForm({ onConnect, isConnecting, connectionToEdit }: SS
               {errors.user && <p className="text-red-400 text-sm">{errors.user.message}</p>}
             </div>
           </div>
-          <Tabs value={authMethod} onValueChange={(v) => { setAuthMethod(v as AuthMethod); setValue('authMethod', v as AuthMethod); }} className="w-full">
+          <Tabs value={authMethod} onValueChange={(v) => { setAuthMethod(v as AuthMethod); setValue('authMethod', v as AuthMethod, { shouldValidate: true }); }} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-900/50">
               <TabsTrigger value="password"><Lock className="w-4 h-4 mr-2" />Password</TabsTrigger>
               <TabsTrigger value="privateKey"><KeyRound className="w-4 h-4 mr-2" />Private Key</TabsTrigger>

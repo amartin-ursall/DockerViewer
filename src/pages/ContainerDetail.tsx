@@ -1,21 +1,22 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { containers } from '@/lib/api-client';
 import type { ContainerLog, ContainerStats, ContainerConfig } from '@shared/types';
 import { Toaster, toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, FileText, BarChart2, Settings } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, FileText, BarChart2, Settings, Terminal as TerminalIcon } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 const LogViewer = ({ logs }: { logs: ContainerLog[] }) => (
   <ScrollArea className="h-[500px] bg-black rounded-md p-4 font-mono text-sm">
-    {logs.map(log => (
-      <div key={log.timestamp} className="flex">
+    {logs.map((log, index) => (
+      <div key={`${log.timestamp}-${index}`} className="flex">
         <span className="text-gray-500 mr-4">{new Date(log.timestamp).toISOString()}</span>
-        <span className={log.message.includes('ERROR') ? 'text-red-400' : log.message.includes('WARN') ? 'text-yellow-400' : 'text-gray-300'}>
+        <span className={log.level === 'error' ? 'text-red-400' : log.level === 'warn' ? 'text-yellow-400' : 'text-gray-300'}>
           {log.message}
         </span>
       </div>
@@ -49,21 +50,85 @@ const StatsViewer = ({ stats }: { stats: ContainerStats | null }) => (
   </div>
 );
 const ConfigViewer = ({ config }: { config: ContainerConfig | null }) => (
-  <div className="space-y-4 h-[500px] overflow-y-auto">
-    <div>
-      <h3 className="font-semibold text-lg mb-2">Environment Variables</h3>
-      <pre className="bg-black p-4 rounded-md text-sm">{JSON.stringify(config?.env, null, 2)}</pre>
+  <ScrollArea className="h-[500px]">
+    <div className="space-y-4">
+      <div>
+        <h3 className="font-semibold text-lg mb-2">Environment Variables</h3>
+        <pre className="bg-black p-4 rounded-md text-sm">{JSON.stringify(config?.env, null, 2)}</pre>
+      </div>
+      <div>
+        <h3 className="font-semibold text-lg mb-2">Volumes</h3>
+        <pre className="bg-black p-4 rounded-md text-sm">{JSON.stringify(config?.volumes, null, 2)}</pre>
+      </div>
+      <div>
+        <h3 className="font-semibold text-lg mb-2">Ports</h3>
+        <pre className="bg-black p-4 rounded-md text-sm">{JSON.stringify(config?.ports, null, 2)}</pre>
+      </div>
     </div>
-    <div>
-      <h3 className="font-semibold text-lg mb-2">Volumes</h3>
-      <pre className="bg-black p-4 rounded-md text-sm">{JSON.stringify(config?.volumes, null, 2)}</pre>
-    </div>
-    <div>
-      <h3 className="font-semibold text-lg mb-2">Ports</h3>
-      <pre className="bg-black p-4 rounded-md text-sm">{JSON.stringify(config?.ports, null, 2)}</pre>
-    </div>
-  </div>
+  </ScrollArea>
 );
+const MockTerminal = () => {
+  const [output, setOutput] = useState<string[]>(['Welcome to the mock terminal! Type `help` for commands.']);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const appendOutput = (text: string) => {
+    setOutput(prev => [...prev, text]);
+  };
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [output]);
+  const simulateResponse = (command: string) => {
+    setTimeout(() => {
+      switch (command.trim()) {
+        case 'help':
+          appendOutput('Available commands: ls, ps, docker ps, whoami, clear');
+          break;
+        case 'ls':
+          appendOutput('bin   dev   etc   home  lib   root  tmp   usr   var');
+          break;
+        case 'ps':
+          appendOutput('  PID TTY          TIME CMD\n    1 ?        00:00:00 sh\n   42 ?        00:00:03 node\n   55 pts/0    00:00:00 bash');
+          break;
+        case 'docker ps':
+          appendOutput('CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                    NAMES\nc1             nginx:latest   "nginx -g \'daemon of…"   10 days ago     Up 5 days      0.0.0.0:80->80/tcp       nginx-proxy');
+          break;
+        case 'whoami':
+          appendOutput('root');
+          break;
+        case 'clear':
+          setOutput([]);
+          break;
+        default:
+          appendOutput(`-bash: ${command}: command not found`);
+      }
+    }, 300);
+  };
+  const handleCommand = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      const command = event.currentTarget.value;
+      appendOutput(`$ ${command}`);
+      simulateResponse(command);
+      event.currentTarget.value = '';
+    }
+  };
+  return (
+    <div className="flex flex-col h-[500px] bg-black rounded-md font-mono text-sm text-gray-300">
+      <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
+        {output.map((line, i) => <div key={i} className="whitespace-pre-wrap">{line}</div>)}
+      </ScrollArea>
+      <div className="flex items-center p-2 border-t border-gray-700">
+        <span className="text-teal-400 mr-2">$</span>
+        <Input
+          placeholder="Type command and press Enter..."
+          onKeyDown={handleCommand}
+          className="bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-300 flex-1"
+          autoFocus
+        />
+      </div>
+    </div>
+  );
+};
 export function ContainerDetailPage() {
   const { serverId, containerId } = useParams();
   const navigate = useNavigate();
@@ -113,6 +178,7 @@ export function ContainerDetailPage() {
                 <TabsTrigger value="logs"><FileText className="w-4 h-4 mr-2" />Logs</TabsTrigger>
                 <TabsTrigger value="stats"><BarChart2 className="w-4 h-4 mr-2" />Stats</TabsTrigger>
                 <TabsTrigger value="config"><Settings className="w-4 h-4 mr-2" />Config</TabsTrigger>
+                <TabsTrigger value="terminal"><TerminalIcon className="w-4 h-4 mr-2" />Terminal</TabsTrigger>
               </TabsList>
               <div className="p-4">
                 <TabsContent value="logs">
@@ -123,6 +189,9 @@ export function ContainerDetailPage() {
                 </TabsContent>
                 <TabsContent value="config">
                   {loading ? <Skeleton className="h-[500px] w-full" /> : <ConfigViewer config={config} />}
+                </TabsContent>
+                <TabsContent value="terminal">
+                  <MockTerminal />
                 </TabsContent>
               </div>
             </Tabs>
