@@ -2,7 +2,7 @@
 
 Náutica is a modern web application for connecting to remote servers via SSH, saving connection profiles securely, and managing Docker containers running on those servers. Designed with a stunning visual interface featuring a deep navy blue theme and harmonious accents, it provides an intuitive experience for server administration. The initial version is an edge-ready demo built with Cloudflare Workers and Durable Objects for simulated backend functionality. In production, integrate with a secure Node.js Connector service for real SSH and Docker operations.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/amartin-ursall/DockerViewer)
 
 ## Features
 
@@ -132,7 +132,7 @@ For custom domains or environments:
 - Use `wrangler deploy --env production` for multi-env.
 - Assets (built React) are served via SPA handling.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/amartin-ursall/DockerViewer)
 
 Production Integration:
 - Deploy a Node.js Connector service (e.g., on your server/VPS) exposing HTTPS API.
