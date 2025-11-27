@@ -1,41 +1,38 @@
-/**
- * Minimal real-world demo: One Durable Object instance per entity (User, ChatBoard), with Indexes for listing.
- */
 import { IndexedEntity } from "./core-utils";
-import type { User, Chat, ChatMessage } from "@shared/types";
-import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS } from "@shared/mock-data";
-
-// USER ENTITY: one DO instance per user
-export class UserEntity extends IndexedEntity<User> {
-  static readonly entityName = "user";
-  static readonly indexName = "users";
-  static readonly initialState: User = { id: "", name: "" };
-  static seedData = MOCK_USERS;
+import type { Server, Container, ContainerStatus, ContainerLog, ContainerStats, ContainerConfig } from "@shared/types";
+import { MOCK_SERVERS, MOCK_CONTAINERS, MOCK_LOGS } from "@shared/mock-data";
+// SERVER ENTITY
+export class ServerEntity extends IndexedEntity<Server> {
+  static readonly entityName = "server";
+  static readonly indexName = "servers";
+  static readonly initialState: Server = { id: "", alias: "", host: "", port: 22, user: "", authMethod: 'password', connected: false };
+  static seedData = MOCK_SERVERS;
 }
-
-// CHAT BOARD ENTITY: one DO instance per chat board, stores its own messages
-export type ChatBoardState = Chat & { messages: ChatMessage[] };
-
-const SEED_CHAT_BOARDS: ChatBoardState[] = MOCK_CHATS.map(c => ({
-  ...c,
-  messages: MOCK_CHAT_MESSAGES.filter(m => m.chatId === c.id),
-}));
-
-export class ChatBoardEntity extends IndexedEntity<ChatBoardState> {
-  static readonly entityName = "chat";
-  static readonly indexName = "chats";
-  static readonly initialState: ChatBoardState = { id: "", title: "", messages: [] };
-  static seedData = SEED_CHAT_BOARDS;
-
-  async listMessages(): Promise<ChatMessage[]> {
-    const { messages } = await this.getState();
-    return messages;
+// CONTAINER ENTITY
+export class ContainerEntity extends IndexedEntity<Container> {
+  static readonly entityName = "container";
+  static readonly indexName = "containers";
+  static readonly initialState: Container = { id: "", serverId: "", name: "", image: "", status: 'stopped', cpu: "0%", memory: "0MB", ports: "", created_ts: 0 };
+  static seedData = MOCK_CONTAINERS;
+  async setStatus(status: ContainerStatus): Promise<Container> {
+    return this.mutate(s => ({ ...s, status }));
   }
-
-  async sendMessage(userId: string, text: string): Promise<ChatMessage> {
-    const msg: ChatMessage = { id: crypto.randomUUID(), chatId: this.id, userId, text, ts: Date.now() };
-    await this.mutate(s => ({ ...s, messages: [...s.messages, msg] }));
-    return msg;
+  async getLogs(): Promise<ContainerLog[]> {
+    // In a real scenario, this would stream from a log store. Here, we simulate.
+    return MOCK_LOGS[this.id] || [];
+  }
+  async getStats(): Promise<ContainerStats> {
+    // Simulate stats data
+    const now = Date.now();
+    const cpu = Array.from({ length: 10 }, (_, i) => ({ time: new Date(now - (10 - i) * 5000).toLocaleTimeString(), value: Math.random() * (this.state.status === 'running' ? 10 : 0) }));
+    const memory = Array.from({ length: 10 }, (_, i) => ({ time: new Date(now - (10 - i) * 5000).toLocaleTimeString(), value: Math.random() * (this.state.status === 'running' ? 512 : 0) }));
+    return { cpu, memory };
+  }
+  async getConfig(): Promise<ContainerConfig> {
+    return {
+      volumes: ['/data:/var/lib/app/data', '/logs:/var/log/app'],
+      env: { 'NODE_ENV': 'production', 'API_KEY': '********' },
+      ports: { '80/tcp': '8080', '443/tcp': '8443' }
+    };
   }
 }
-

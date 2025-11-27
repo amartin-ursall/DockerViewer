@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Toaster, toast } from 'sonner';
 import { servers } from '@/lib/api-client';
@@ -7,14 +7,9 @@ import type { ServerSummary } from '@shared/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Cpu, MemoryStick, HardDrive, Timer, Anchor, Box, Image as ImageIcon, FileText as LogIcon, ChevronRight } from 'lucide-react';
-import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
+import { Cpu, MemoryStick, HardDrive, Timer, Docker } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ContainersPage } from './ContainersPage';
-import { ImagesPage } from './ImagesPage';
-import { LogsPage } from './LogsPage';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { motion } from 'framer-motion';
 const MetricCard = ({ title, value, total, unit, icon: Icon, progress, history }: any) => (
   <Card className="bg-gray-900/50 border-gray-700/50 text-white">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -63,9 +58,8 @@ const LoadingSkeleton = () => (
   </div>
 );
 export function DashboardPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const serverId = searchParams.get('serverId');
-  const view = searchParams.get('view') || 'containers';
   const navigate = useNavigate();
   const [summary, setSummary] = useState<ServerSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,31 +83,11 @@ export function DashboardPage() {
     const interval = setInterval(fetchSummary, 5000);
     return () => clearInterval(interval);
   }, [serverId, navigate]);
-  const handleViewChange = (newView: string) => {
-    setSearchParams({ serverId: serverId!, view: newView });
-  };
   if (!serverId) return null;
   return (
     <AppLayout container>
       <Toaster richColors theme="dark" />
       <div className="space-y-8">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/connections" className="text-teal-400 hover:text-teal-300 transition-colors">Connections</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator>
-                <ChevronRight className="h-4 w-4" />
-              </BreadcrumbSeparator>
-              <BreadcrumbItem>
-                <BreadcrumbPage className="text-gray-400">Dashboard</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </motion.div>
         <h1 className="text-3xl font-bold text-white">Server Dashboard</h1>
         {loading ? <LoadingSkeleton /> : summary && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -121,20 +95,11 @@ export function DashboardPage() {
             <MetricCard title="Memory Usage" value={summary.memory.usage.toFixed(1)} total={summary.memory.total} unit="GB" icon={MemoryStick} progress={(summary.memory.usage / summary.memory.total) * 100} history={summary.memory.history} />
             <MetricCard title="Disk Usage" value={summary.disk.usage.toFixed(0)} total={summary.disk.total} unit="GB" icon={HardDrive} progress={(summary.disk.usage / summary.disk.total) * 100} />
             <MetricCard title="Uptime" value={summary.uptime} unit="" icon={Timer} />
-            <MetricCard title="Docker Status" value={summary.dockerStatus} unit="" icon={Anchor} />
+            <MetricCard title="Docker Status" value={summary.dockerStatus} unit="" icon={Docker} />
           </div>
         )}
         <div>
-          <Tabs value={view} onValueChange={handleViewChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-900/50 mb-4">
-              <TabsTrigger value="containers"><Box className="w-4 h-4 mr-2" />Containers</TabsTrigger>
-              <TabsTrigger value="images"><ImageIcon className="w-4 h-4 mr-2" />Images</TabsTrigger>
-              <TabsTrigger value="logs"><LogIcon className="w-4 h-4 mr-2" />Logs</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          {view === 'containers' && <ContainersPage serverId={serverId} />}
-          {view === 'images' && <ImagesPage serverId={serverId} />}
-          {view === 'logs' && <LogsPage serverId={serverId} />}
+          <ContainersPage serverId={serverId} />
         </div>
       </div>
     </AppLayout>
