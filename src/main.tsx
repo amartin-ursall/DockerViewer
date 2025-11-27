@@ -14,6 +14,7 @@ import { HomePage } from '@/pages/HomePage'
 import { ConnectionsPage } from '@/pages/ConnectionsPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ContainerDetailPage } from '@/pages/ContainerDetail';
+import { SettingsPage } from '@/pages/SettingsPage';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -33,6 +34,11 @@ const router = createBrowserRouter([
   {
     path: "/servers/:serverId/containers/:containerId",
     element: <ContainerDetailPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/settings",
+    element: <SettingsPage />,
     errorElement: <RouteErrorBoundary />,
   },
 ]);

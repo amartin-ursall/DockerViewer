@@ -1,6 +1,6 @@
 import { IndexedEntity } from "./core-utils";
-import type { Server, Container, ContainerStatus, ContainerLog, ContainerStats, ContainerConfig } from "@shared/types";
-import { MOCK_SERVERS, MOCK_CONTAINERS, MOCK_LOGS } from "@shared/mock-data";
+import type { Server, Container, ContainerStatus, ContainerLog, ContainerStats, ContainerConfig, Image } from "@shared/types";
+import { MOCK_SERVERS, MOCK_CONTAINERS, MOCK_LOGS, MOCK_IMAGES } from "@shared/mock-data";
 // SERVER ENTITY
 export class ServerEntity extends IndexedEntity<Server> {
   static readonly entityName = "server";
@@ -35,4 +35,11 @@ export class ContainerEntity extends IndexedEntity<Container> {
       ports: { '80/tcp': '8080', '443/tcp': '8443' }
     };
   }
+}
+// IMAGE ENTITY
+export class ImageEntity extends IndexedEntity<Image> {
+  static readonly entityName = "image";
+  static readonly indexName = "images";
+  static readonly initialState: Image = { id: "", serverId: "", repository: "", tag: "", size: "0MB", created_ts: 0 };
+  static seedData = MOCK_IMAGES;
 }

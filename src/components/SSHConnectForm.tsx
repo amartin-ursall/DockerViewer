@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import React, { useState, useEffect } from 'react';
+import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { KeyRound, Lock, Server, User, FileUp, ClipboardPaste } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { KeyRound, Lock, Server, FileUp, ClipboardPaste } from 'lucide-react';
 import type { Connection, AuthMethod } from '@shared/types';
 const formSchema = z.object({
   alias: z.string().min(1, 'Alias is required'),
   host: z.string().min(1, 'Host is required'),
-  port: z.coerce.number().min(1).max(65535),
+  port: z.coerce.number().min(1, 'Port must be between 1-65535').max(65535, 'Port must be between 1-65535'),
   user: z.string().min(1, 'User is required'),
   authMethod: z.enum(['password', 'privateKey']),
   password: z.string().optional(),
@@ -29,7 +28,7 @@ const formSchema = z.object({
     if (data.authMethod === 'privateKey') return !!data.privateKey && data.privateKey.length > 0;
     return true;
 }, { message: 'Private key is required', path: ['privateKey'] });
-type ConnectionFormData = z.infer<typeof formSchema>;
+export type ConnectionFormData = z.infer<typeof formSchema>;
 interface SSHConnectFormProps {
   onConnect: (data: ConnectionFormData) => void;
   isConnecting: boolean;
@@ -37,19 +36,36 @@ interface SSHConnectFormProps {
 }
 export function SSHConnectForm({ onConnect, isConnecting, connectionToEdit }: SSHConnectFormProps) {
   const [authMethod, setAuthMethod] = useState<AuthMethod>(connectionToEdit?.authMethod || 'password');
-  const { register, handleSubmit, control, formState: { errors }, setValue, watch } = useForm<ConnectionFormData>({
+  const { register, handleSubmit, control, formState: { errors }, setValue, reset } = useForm<ConnectionFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      alias: connectionToEdit?.alias || 'New Server',
-      host: connectionToEdit?.host || '192.168.1.1',
-      port: connectionToEdit?.port || 22,
-      user: connectionToEdit?.user || 'root',
-      authMethod: authMethod,
+      alias: 'New Server',
+      host: '192.168.1.1',
+      port: 22,
+      user: 'root',
+      authMethod: 'password',
       password: '',
       privateKey: '',
       saveConnection: true,
     },
   });
+  useEffect(() => {
+    if (connectionToEdit) {
+      reset({
+        ...connectionToEdit,
+        saveConnection: true,
+        password: '',
+        privateKey: '',
+      });
+      setAuthMethod(connectionToEdit.authMethod);
+    } else {
+        reset({
+            alias: 'New Server', host: '192.168.1.1', port: 22, user: 'root',
+            authMethod: 'password', password: '', privateKey: '', saveConnection: true,
+        });
+        setAuthMethod('password');
+    }
+  }, [connectionToEdit, reset]);
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -68,15 +84,18 @@ export function SSHConnectForm({ onConnect, isConnecting, connectionToEdit }: SS
       console.error('Failed to read clipboard contents: ', err);
     }
   };
+  const onSubmit: SubmitHandler<ConnectionFormData> = (data) => {
+    onConnect(data);
+  };
   return (
     <Card className="w-full max-w-2xl bg-[#071431]/80 border-teal-500/20 text-gray-200 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-teal-400 flex items-center gap-2">
           <Server className="w-6 h-6" />
-          <span>Connect to Server</span>
+          <span>{connectionToEdit ? 'Edit Connection' : 'Connect to Server'}</span>
         </CardTitle>
       </CardHeader>
-      <form onSubmit={handleSubmit(onConnect)}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">

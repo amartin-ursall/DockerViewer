@@ -40,6 +40,9 @@ export interface Container {
 export interface ContainerLog {
   timestamp: number;
   message: string;
+  level: 'info' | 'warn' | 'error';
+  containerId: string;
+  containerName: string;
 }
 export interface ContainerStats {
   cpu: { time: string; value: number }[];
@@ -50,3 +53,12 @@ export interface ContainerConfig {
   env: Record<string, string>;
   ports: Record<string, string>;
 }
+export interface Image {
+  id: string;
+  serverId: string;
+  repository: string;
+  tag: string;
+  size: string;
+  created_ts: number;
+}
+export type ImageAction = 'pull' | 'remove';

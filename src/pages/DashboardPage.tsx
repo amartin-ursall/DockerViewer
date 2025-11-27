@@ -7,9 +7,12 @@ import type { ServerSummary } from '@shared/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Cpu, MemoryStick, HardDrive, Timer, Docker } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Cpu, MemoryStick, HardDrive, Timer, Anchor, Box, Image as ImageIcon, FileText as LogIcon } from 'lucide-react';
+import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
 import { ContainersPage } from './ContainersPage';
+import { ImagesPage } from './ImagesPage';
+import { LogsPage } from './LogsPage';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 const MetricCard = ({ title, value, total, unit, icon: Icon, progress, history }: any) => (
   <Card className="bg-gray-900/50 border-gray-700/50 text-white">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -58,8 +61,9 @@ const LoadingSkeleton = () => (
   </div>
 );
 export function DashboardPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const serverId = searchParams.get('serverId');
+  const view = searchParams.get('view') || 'containers';
   const navigate = useNavigate();
   const [summary, setSummary] = useState<ServerSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,6 +87,9 @@ export function DashboardPage() {
     const interval = setInterval(fetchSummary, 5000);
     return () => clearInterval(interval);
   }, [serverId, navigate]);
+  const handleViewChange = (newView: string) => {
+    setSearchParams({ serverId: serverId!, view: newView });
+  };
   if (!serverId) return null;
   return (
     <AppLayout container>
@@ -95,11 +102,20 @@ export function DashboardPage() {
             <MetricCard title="Memory Usage" value={summary.memory.usage.toFixed(1)} total={summary.memory.total} unit="GB" icon={MemoryStick} progress={(summary.memory.usage / summary.memory.total) * 100} history={summary.memory.history} />
             <MetricCard title="Disk Usage" value={summary.disk.usage.toFixed(0)} total={summary.disk.total} unit="GB" icon={HardDrive} progress={(summary.disk.usage / summary.disk.total) * 100} />
             <MetricCard title="Uptime" value={summary.uptime} unit="" icon={Timer} />
-            <MetricCard title="Docker Status" value={summary.dockerStatus} unit="" icon={Docker} />
+            <MetricCard title="Docker Status" value={summary.dockerStatus} unit="" icon={Anchor} />
           </div>
         )}
         <div>
-          <ContainersPage serverId={serverId} />
+          <Tabs value={view} onValueChange={handleViewChange} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-gray-900/50 mb-4">
+              <TabsTrigger value="containers"><Box className="w-4 h-4 mr-2" />Containers</TabsTrigger>
+              <TabsTrigger value="images"><ImageIcon className="w-4 h-4 mr-2" />Images</TabsTrigger>
+              <TabsTrigger value="logs"><LogIcon className="w-4 h-4 mr-2" />Logs</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {view === 'containers' && <ContainersPage serverId={serverId} />}
+          {view === 'images' && <ImagesPage serverId={serverId} />}
+          {view === 'logs' && <LogsPage serverId={serverId} />}
         </div>
       </div>
     </AppLayout>

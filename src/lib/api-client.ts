@@ -1,4 +1,4 @@
-import type { ApiResponse, Server, Container, ContainerLog, ContainerStats, ServerSummary, ContainerConfig } from "@shared/types"
+import type { ApiResponse, Server, Container, ContainerLog, ContainerStats, ServerSummary, ContainerConfig, Image } from "@shared/types"
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...init })
   const json = (await res.json()) as ApiResponse<T>
@@ -19,4 +19,12 @@ export const containers = {
   getLogs: (serverId: string, containerId: string) => api<ContainerLog[]>(`/api/servers/${serverId}/containers/${containerId}/logs`),
   getStats: (serverId: string, containerId: string) => api<ContainerStats>(`/api/servers/${serverId}/containers/${containerId}/stats`),
   getConfig: (serverId: string, containerId: string) => api<ContainerConfig>(`/api/servers/${serverId}/containers/${containerId}/config`),
+};
+export const images = {
+  list: (serverId: string) => api<Image[]>(`/api/servers/${serverId}/images`),
+  remove: (serverId: string, imageId: string) =>
+    api<{ deleted: boolean }>(`/api/servers/${serverId}/images/${imageId}/action`, { method: 'POST', body: JSON.stringify({ action: 'remove' }) }),
+};
+export const logs = {
+  getServerLogs: (serverId: string) => api<ContainerLog[]>(`/api/servers/${serverId}/logs`),
 };

@@ -33,7 +33,7 @@ export function HomePage() {
           </div>
         </div>
         <footer className="absolute bottom-8 text-center text-gray-600">
-          <p>Built with ❤��� at Cloudflare</p>
+          <p>Built with love at Cloudflare</p>
         </footer>
       </div>
     </AppLayout>
